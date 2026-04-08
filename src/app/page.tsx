@@ -13,26 +13,25 @@ export default async function Home() {
   return (
     <main className="min-h-screen flex flex-col bg-masters-cream">
       {/* Hero */}
-      <section className="bg-masters-dark text-white">
-        <div className="max-w-3xl mx-auto px-6 py-16 text-center">
-          <p className="text-masters-yellow text-[10px] font-semibold tracking-[0.35em] uppercase mb-3">
+      <section className="bg-masters-green text-white">
+        <div className="max-w-3xl mx-auto px-6 py-14 text-center">
+          <p className="text-masters-yellow text-[10px] font-semibold tracking-[0.35em] uppercase mb-2">
             A Tradition Unlike Any Other
           </p>
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-3">
             Masters Fantasy Pool
           </h1>
-          <p className="text-green-200/80 text-sm max-w-md mx-auto">
-            Seven tiers. Four scores count. Lowest total wins the jacket.
+          <p className="text-white/60 text-sm max-w-md mx-auto">
+            Seven tiers. Four scores count. Lowest total wins.
           </p>
           <div className="divider-gold max-w-48 mx-auto mt-8" />
         </div>
       </section>
 
-      {/* How it works + Auth side by side */}
-      <section className="max-w-5xl mx-auto px-6 py-12 flex-1 grid md:grid-cols-2 gap-10 items-start">
-        {/* Left — Rules */}
+      {/* Rules + Auth */}
+      <section className="max-w-4xl mx-auto px-6 py-10 flex-1 grid md:grid-cols-2 gap-10 items-start">
         <div>
-          <h2 className="text-lg font-bold text-masters-dark mb-6">
+          <h2 className="text-sm font-bold text-masters-green mb-5 uppercase tracking-wider">
             How It Works
           </h2>
           <div className="space-y-4">
@@ -40,28 +39,28 @@ export default async function Home() {
               {
                 n: "1",
                 title: "Draft Your Team",
-                desc: "Pick one golfer from each of the 7 tiers — including a dedicated Canadian tier.",
+                desc: "Pick one golfer from each of 7 tiers — including a dedicated Canadian tier.",
               },
               {
                 n: "2",
                 title: "Best 4 Count",
-                desc: "After the tournament, your best four scores are summed. Missed cuts score 80 for rounds 3 & 4.",
+                desc: "Your four best scores are summed. Missed cuts get 80 for rounds 3 & 4.",
               },
               {
                 n: "3",
                 title: "Win the Jacket",
-                desc: "Lowest total wins. Tiebreaker: closest prediction to the winner's final score.",
+                desc: "Lowest total wins. Tiebreaker: closest to the winner's final score.",
               },
             ].map((step) => (
               <div key={step.n} className="flex gap-3">
-                <span className="shrink-0 w-7 h-7 rounded-full bg-masters-green text-white flex items-center justify-center text-xs font-bold">
+                <span className="shrink-0 w-6 h-6 rounded-full bg-masters-green text-white flex items-center justify-center text-[10px] font-bold">
                   {step.n}
                 </span>
                 <div>
-                  <p className="text-sm font-semibold text-masters-dark">
+                  <p className="text-sm font-semibold text-masters-green">
                     {step.title}
                   </p>
-                  <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
+                  <p className="text-xs text-masters-green/50 mt-0.5 leading-relaxed">
                     {step.desc}
                   </p>
                 </div>
@@ -69,21 +68,18 @@ export default async function Home() {
             ))}
           </div>
 
-          <div className="mt-8 grid grid-cols-4 gap-2">
+          <div className="mt-6 grid grid-cols-4 gap-2">
             {[
               { label: "Tiers", value: "7" },
               { label: "Count", value: "Best 4" },
               { label: "Scoring", value: "Strokes" },
-              { label: "Cut Rule", value: "80/rd" },
+              { label: "Cut Penalty", value: "80/rd" },
             ].map((stat) => (
-              <div
-                key={stat.label}
-                className="card px-3 py-2 text-center"
-              >
-                <p className="text-lg font-bold text-masters-green font-sans">
+              <div key={stat.label} className="card px-2 py-2 text-center">
+                <p className="text-base font-bold text-masters-green font-sans">
                   {stat.value}
                 </p>
-                <p className="text-[10px] text-gray-400 uppercase tracking-wider">
+                <p className="text-[9px] text-masters-green/40 uppercase tracking-wider">
                   {stat.label}
                 </p>
               </div>
@@ -91,12 +87,10 @@ export default async function Home() {
           </div>
         </div>
 
-        {/* Right — Auth */}
         <AuthForm />
       </section>
 
-      {/* Footer */}
-      <footer className="bg-masters-dark text-green-200/50 text-center py-4 text-xs">
+      <footer className="bg-masters-green text-white/30 text-center py-4 text-xs">
         Masters Fantasy Pool &middot; {new Date().getFullYear()}
       </footer>
     </main>

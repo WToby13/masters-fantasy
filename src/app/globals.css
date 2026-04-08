@@ -1,61 +1,56 @@
 @import "tailwindcss";
 
 :root {
-  --masters-green: #2d6a4f;
-  --masters-dark: #1b4332;
-  --masters-light: #74c69d;
-  --masters-mint: #b7e4c7;
-  --masters-yellow: #e9c46a;
-  --masters-gold: #d4a843;
-  --masters-cream: #fefcf6;
-  --masters-sand: #f8f4eb;
-  --masters-blush: #f0ebe3;
-  --background: #fefcf6;
-  --foreground: #2d3436;
+  --green: #006747;
+  --green-dark: #00513a;
+  --green-light: #e8f0ec;
+  --yellow: #f2c75c;
+  --gold: #c9a227;
+  --cream: #fdfaf3;
+  --sand: #f5f0e6;
+  --beige: #ede8dc;
+  --foreground: #2c2c2c;
 }
 
 @theme inline {
-  --color-background: var(--background);
+  --color-background: var(--cream);
   --color-foreground: var(--foreground);
-  --color-masters-green: var(--masters-green);
-  --color-masters-dark: var(--masters-dark);
-  --color-masters-light: var(--masters-light);
-  --color-masters-mint: var(--masters-mint);
-  --color-masters-yellow: var(--masters-yellow);
-  --color-masters-gold: var(--masters-gold);
-  --color-masters-cream: var(--masters-cream);
-  --color-masters-sand: var(--masters-sand);
-  --color-masters-blush: var(--masters-blush);
+  --color-masters-green: var(--green);
+  --color-masters-green-dark: var(--green-dark);
+  --color-masters-green-light: var(--green-light);
+  --color-masters-yellow: var(--yellow);
+  --color-masters-gold: var(--gold);
+  --color-masters-cream: var(--cream);
+  --color-masters-sand: var(--sand);
+  --color-masters-beige: var(--beige);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 body {
-  background: var(--background);
+  background: var(--cream);
   color: var(--foreground);
 }
 
 ::selection {
-  background: var(--masters-mint);
-  color: var(--masters-dark);
+  background: var(--green-light);
 }
 
 .btn-masters {
-  background: var(--masters-green);
+  background: var(--green);
   color: white;
-  padding: 0.625rem 1.5rem;
-  border-radius: 0.5rem;
+  padding: 0.625rem 1.75rem;
+  border-radius: 0.375rem;
   font-weight: 600;
   font-size: 0.875rem;
-  letter-spacing: 0.02em;
-  transition: all 0.2s;
+  letter-spacing: 0.015em;
+  transition: background 0.15s;
   border: none;
   cursor: pointer;
 }
 
 .btn-masters:hover {
-  background: var(--masters-dark);
-  box-shadow: 0 2px 8px rgba(45, 106, 79, 0.25);
+  background: var(--green-dark);
 }
 
 .btn-masters:disabled {
@@ -65,28 +60,27 @@ body {
 
 .card {
   background: white;
-  border: 1px solid #ebe6db;
-  border-radius: 0.625rem;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  border: 1px solid var(--beige);
+  border-radius: 0.5rem;
 }
 
-.input-masters {
+.input-field {
   width: 100%;
   padding: 0.5rem 0.75rem;
-  border: 1.5px solid #ddd6c8;
+  border: 1px solid var(--beige);
   border-radius: 0.375rem;
   background: white;
   font-size: 0.875rem;
   transition: border-color 0.15s;
 }
 
-.input-masters:focus {
+.input-field:focus {
   outline: none;
-  border-color: var(--masters-green);
-  box-shadow: 0 0 0 2px rgba(45, 106, 79, 0.08);
+  border-color: var(--green);
+  box-shadow: 0 0 0 2px rgba(0, 103, 71, 0.08);
 }
 
 .divider-gold {
   height: 2px;
-  background: linear-gradient(90deg, transparent, var(--masters-yellow), var(--masters-gold), var(--masters-yellow), transparent);
+  background: linear-gradient(90deg, transparent, var(--yellow), var(--gold), var(--yellow), transparent);
 }

@@ -46,10 +46,10 @@ export default function AuthForm() {
 
   return (
     <div className="card p-6">
-      <h2 className="text-lg font-bold text-masters-dark mb-1">
+      <h2 className="text-lg font-bold text-masters-green mb-1">
         {mode === "login" ? "Welcome Back" : "Join the Pool"}
       </h2>
-      <p className="text-xs text-gray-400 mb-5">
+      <p className="text-xs text-masters-green/40 mb-5">
         {mode === "login"
           ? "Sign in to manage your picks"
           : "Create your account to start drafting"}
@@ -58,12 +58,12 @@ export default function AuthForm() {
       <form onSubmit={handleSubmit} className="space-y-3">
         {mode === "signup" && (
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">
+            <label className="block text-xs font-semibold text-masters-green/70 mb-1">
               Display Name
             </label>
             <input
               type="text"
-              className="input-masters"
+              className="input-field"
               placeholder="e.g. Tiger"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
@@ -72,12 +72,12 @@ export default function AuthForm() {
           </div>
         )}
         <div>
-          <label className="block text-xs font-semibold text-gray-600 mb-1">
+          <label className="block text-xs font-semibold text-masters-green/70 mb-1">
             Email
           </label>
           <input
             type="email"
-            className="input-masters"
+            className="input-field"
             placeholder="you@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -85,12 +85,12 @@ export default function AuthForm() {
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-gray-600 mb-1">
+          <label className="block text-xs font-semibold text-masters-green/70 mb-1">
             Password
           </label>
           <input
             type="password"
-            className="input-masters"
+            className="input-field"
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -100,7 +100,7 @@ export default function AuthForm() {
         </div>
 
         {error && (
-          <p className="text-xs text-red-600 bg-red-50 border border-red-100 rounded px-3 py-2">
+          <p className="text-xs text-masters-gold bg-masters-sand border border-masters-beige rounded px-3 py-2">
             {error}
           </p>
         )}
@@ -120,7 +120,7 @@ export default function AuthForm() {
           setMode(mode === "login" ? "signup" : "login");
           setError("");
         }}
-        className="mt-4 w-full text-center text-xs text-masters-green hover:text-masters-dark underline underline-offset-2"
+        className="mt-4 w-full text-center text-xs text-masters-green/60 hover:text-masters-green underline underline-offset-2"
       >
         {mode === "login"
           ? "Need an account? Sign up"
