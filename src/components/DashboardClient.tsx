@@ -5,16 +5,7 @@ import { createClient } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import type { Tournament, Golfer, Profile, Pick } from "@/lib/types";
 import { TIER_COLORS, TIER_LABELS, NUM_TIERS, BEST_OF } from "@/lib/types";
-import {
-  LogOut,
-  TreePine,
-  Trophy,
-  ChevronDown,
-  ChevronUp,
-  Loader2,
-  Check,
-  Scissors,
-} from "lucide-react";
+import { LogOut, Trophy, Loader2, Scissors } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 
 interface Props {
@@ -27,15 +18,12 @@ interface Props {
   allProfiles: Profile[];
 }
 
-function TierBadge({ tier }: { tier: number }) {
-  const color = TIER_COLORS[tier];
-  return (
-    <span className={`tier-badge ${color.bg} ${color.text}`}>{tier}</span>
-  );
-}
-
 function effectiveScore(golfer: Golfer): number {
-  if (golfer.status === "cut" || golfer.status === "withdrawn" || golfer.status === "disqualified") {
+  if (
+    golfer.status === "cut" ||
+    golfer.status === "withdrawn" ||
+    golfer.status === "disqualified"
+  ) {
     return (golfer.score_r1 ?? 0) + (golfer.score_r2 ?? 0) + 80 + 80;
   }
   return golfer.total_score ?? 0;
@@ -63,9 +51,6 @@ export default function DashboardClient({
     profile?.tiebreaker_score?.toString() ?? ""
   );
   const [saving, setSaving] = useState(false);
-  const [expandedTier, setExpandedTier] = useState<number | null>(
-    userPicks.length === 0 ? 1 : null
-  );
   const [tab, setTab] = useState<"picks" | "leaderboard">(
     userPicks.length === NUM_TIERS ? "leaderboard" : "picks"
   );
@@ -83,14 +68,14 @@ export default function DashboardClient({
 
   const leaderboard = useMemo(() => {
     const profileMap = new Map(allProfiles.map((p) => [p.id, p]));
-    const userPicks: Record<string, { golfer: Golfer; tier: number }[]> = {};
+    const grouped: Record<string, { golfer: Golfer; tier: number }[]> = {};
 
     allPicks.forEach((p) => {
-      if (!userPicks[p.user_id]) userPicks[p.user_id] = [];
-      userPicks[p.user_id].push({ golfer: p.golfer, tier: p.tier });
+      if (!grouped[p.user_id]) grouped[p.user_id] = [];
+      grouped[p.user_id].push({ golfer: p.golfer, tier: p.tier });
     });
 
-    return Object.entries(userPicks)
+    return Object.entries(grouped)
       .map(([userId, picks]) => {
         const scores = picks
           .map((p) => ({
@@ -99,8 +84,8 @@ export default function DashboardClient({
           }))
           .sort((a, b) => a.score - b.score);
 
-        const best4 = scores.slice(0, BEST_OF);
-        const total = best4.reduce((s, p) => s + p.score, 0);
+        const best = scores.slice(0, BEST_OF);
+        const total = best.reduce((s, p) => s + p.score, 0);
         const prof = profileMap.get(userId);
         const tb = prof?.tiebreaker_score;
         const tbDiff =
@@ -112,7 +97,7 @@ export default function DashboardClient({
           userId,
           profile: prof,
           picks: scores,
-          best4Ids: new Set(best4.map((p) => p.golfer.id)),
+          bestIds: new Set(best.map((p) => p.golfer.id)),
           total,
           tiebreakerDiff: tbDiff,
         };
@@ -129,7 +114,6 @@ export default function DashboardClient({
   async function handleSave() {
     if (Object.keys(selections).length !== NUM_TIERS) return;
     setSaving(true);
-
     try {
       for (let tier = 1; tier <= NUM_TIERS; tier++) {
         const existing = userPicks.find((p) => p.tier === tier);
@@ -147,14 +131,12 @@ export default function DashboardClient({
           });
         }
       }
-
       if (tiebreaker) {
         await supabase
           .from("profiles")
           .update({ tiebreaker_score: parseInt(tiebreaker) })
           .eq("id", user.id);
       }
-
       router.refresh();
     } catch (err) {
       console.error("Save failed:", err);
@@ -171,202 +153,180 @@ export default function DashboardClient({
 
   if (!tournament) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="card-masters p-12 text-center max-w-md">
-          <TreePine className="w-12 h-12 text-masters-green mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-masters-dark mb-2">
+      <div className="min-h-screen flex items-center justify-center bg-masters-cream">
+        <div className="card p-10 text-center max-w-sm">
+          <p className="text-lg font-semibold text-masters-dark mb-1">
             No Active Tournament
-          </h2>
-          <p className="text-gray-500">
-            Check back when the pool opens for the next tournament.
+          </p>
+          <p className="text-sm text-gray-400">
+            Check back when the pool opens.
           </p>
         </div>
       </div>
     );
   }
 
+  const isLive =
+    tournament.status !== "upcoming" && tournament.status !== "drafting";
+
   return (
-    <div className="min-h-screen bg-masters-cream">
+    <div className="min-h-screen bg-masters-cream flex flex-col">
       {/* Header */}
-      <header className="bg-masters-green text-white shadow-lg">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <TreePine className="w-6 h-6 text-masters-yellow" />
-            <div>
-              <h1 className="text-lg font-bold tracking-tight">
-                Masters Fantasy Pool
-              </h1>
-              <p className="text-green-200 text-xs">{tournament.name}</p>
-            </div>
+      <header className="bg-masters-dark text-white">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <span className="text-masters-yellow text-xs font-semibold tracking-[0.2em] uppercase">
+              {tournament.name}
+            </span>
           </div>
-          <div className="flex items-center gap-4">
-            <span className="text-green-200 text-sm hidden sm:block">
+          <div className="flex items-center gap-3">
+            <span className="text-green-200/80 text-xs">
               {profile?.display_name}
             </span>
             <button
               onClick={handleLogout}
-              className="text-green-200 hover:text-white transition-colors"
-              title="Sign out"
+              className="text-green-200/60 hover:text-white transition-colors"
             >
-              <LogOut className="w-5 h-5" />
+              <LogOut className="w-4 h-4" />
             </button>
           </div>
         </div>
       </header>
-
-      <div className="azalea-divider" />
+      <div className="divider-gold" />
 
       {/* Tabs */}
-      <div className="max-w-6xl mx-auto px-4 pt-6">
-        <div className="flex gap-1 bg-white rounded-lg p-1 shadow-sm w-fit">
-          <button
-            onClick={() => setTab("picks")}
-            className={`px-5 py-2 rounded-md text-sm font-semibold transition-colors ${
-              tab === "picks"
-                ? "bg-masters-green text-white"
-                : "text-gray-600 hover:bg-gray-100"
-            }`}
-          >
-            {hasPicks ? "My Team" : "Draft Picks"}
-          </button>
-          <button
-            onClick={() => setTab("leaderboard")}
-            className={`px-5 py-2 rounded-md text-sm font-semibold transition-colors ${
-              tab === "leaderboard"
-                ? "bg-masters-green text-white"
-                : "text-gray-600 hover:bg-gray-100"
-            }`}
-          >
-            Leaderboard
-          </button>
-        </div>
+      <div className="max-w-7xl mx-auto w-full px-4 pt-4 flex items-center gap-4">
+        <nav className="flex gap-1 bg-white/80 rounded-lg p-0.5 border border-gray-100">
+          {(["picks", "leaderboard"] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`px-4 py-1.5 rounded-md text-xs font-semibold tracking-wide transition-all ${
+                tab === t
+                  ? "bg-masters-green text-white shadow-sm"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              {t === "picks"
+                ? hasPicks && !isDraftOpen
+                  ? "My Team"
+                  : "Draft"
+                : "Leaderboard"}
+            </button>
+          ))}
+        </nav>
+        <p className="text-[11px] text-gray-400 ml-auto hidden sm:block">
+          Pick 1 per tier &middot; Best {BEST_OF} of {NUM_TIERS} count &middot;
+          Lowest wins
+        </p>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-6">
+      {/* Content */}
+      <div className="max-w-7xl mx-auto w-full px-4 py-4 flex-1">
         {tab === "picks" && (
           <>
-            {/* Draft / Team View */}
             {hasPicks && !isDraftOpen ? (
-              <MyTeam
+              <TeamView
                 picks={userPicks}
                 golfers={golfers}
                 profile={profile}
                 tournament={tournament}
+                isLive={isLive}
               />
             ) : (
-              <div className="space-y-3">
-                <div className="card-masters p-5 mb-4">
-                  <h2 className="text-xl font-bold text-masters-dark mb-1">
-                    {hasPicks
-                      ? "Update Your Picks"
-                      : "Draft Your Team"}
-                  </h2>
-                  <p className="text-gray-500 text-sm">
-                    Select one golfer from each tier. Your best {BEST_OF} of {NUM_TIERS} scores
-                    will count.
-                  </p>
-                </div>
-
-                {Array.from({ length: NUM_TIERS }, (_, i) => i + 1).map((tier) => (
-                  <div key={tier} className="card-masters overflow-hidden">
-                    <button
-                      onClick={() =>
-                        setExpandedTier(expandedTier === tier ? null : tier)
-                      }
-                      className="w-full px-5 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <TierBadge tier={tier} />
-                        <div className="text-left">
-                          <span className="font-bold text-masters-dark">
-                            Tier {tier}
-                          </span>
-                          <span className="text-gray-400 text-sm ml-2">
-                            {TIER_LABELS[tier]}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        {selections[tier] && (
-                          <span className="text-sm text-masters-green font-semibold flex items-center gap-1">
-                            <Check className="w-4 h-4" />
-                            {
-                              golfers.find((g) => g.id === selections[tier])
-                                ?.name
-                            }
-                          </span>
-                        )}
-                        {expandedTier === tier ? (
-                          <ChevronUp className="w-5 h-5 text-gray-400" />
-                        ) : (
-                          <ChevronDown className="w-5 h-5 text-gray-400" />
-                        )}
-                      </div>
-                    </button>
-
-                    {expandedTier === tier && (
-                      <div className="border-t border-gray-100 divide-y divide-gray-50">
-                        {golfersByTier[tier]?.map((golfer) => (
-                          <button
-                            key={golfer.id}
-                            onClick={() =>
-                              setSelections((s) => ({
-                                ...s,
-                                [tier]: golfer.id,
-                              }))
-                            }
-                            className={`w-full px-5 py-3 flex items-center justify-between text-left transition-colors ${
-                              selections[tier] === golfer.id
-                                ? "bg-green-50 border-l-4 border-masters-green"
-                                : "hover:bg-gray-50 border-l-4 border-transparent"
-                            }`}
+              <div className="space-y-4">
+                {/* Tier Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {Array.from({ length: NUM_TIERS }, (_, i) => i + 1).map(
+                    (tier) => {
+                      const color = TIER_COLORS[tier];
+                      const selected = golfers.find(
+                        (g) => g.id === selections[tier]
+                      );
+                      return (
+                        <div
+                          key={tier}
+                          className={`card overflow-hidden border ${
+                            selected ? color.border : ""
+                          }`}
+                        >
+                          <div
+                            className={`px-3 py-2 flex items-center gap-2 ${color.bg}`}
                           >
-                            <div>
-                              <span className="font-semibold text-gray-900">
-                                {golfer.name}
-                              </span>
-                              <span className="text-gray-400 text-sm ml-2 font-sans">
-                                #{golfer.world_ranking}
-                              </span>
-                            </div>
-                            {selections[tier] === golfer.id && (
-                              <Check className="w-5 h-5 text-masters-green" />
+                            <span
+                              className={`text-[10px] font-bold uppercase tracking-wider ${color.text}`}
+                            >
+                              Tier {tier}
+                            </span>
+                            <span
+                              className={`text-[10px] ${color.text} opacity-60`}
+                            >
+                              {TIER_LABELS[tier]}
+                            </span>
+                          </div>
+                          <div className="p-2">
+                            <select
+                              value={selections[tier] || ""}
+                              onChange={(e) =>
+                                setSelections((s) => ({
+                                  ...s,
+                                  [tier]: e.target.value,
+                                }))
+                              }
+                              className="w-full text-sm py-1.5 px-2 rounded border border-gray-200 bg-white focus:outline-none focus:border-masters-green focus:ring-1 focus:ring-masters-green/20 appearance-none cursor-pointer"
+                            >
+                              <option value="">Select golfer...</option>
+                              {golfersByTier[tier]?.map((g) => (
+                                <option key={g.id} value={g.id}>
+                                  {g.name} (#{g.world_ranking})
+                                </option>
+                              ))}
+                            </select>
+                            {selected && (
+                              <p className="text-[11px] text-masters-green font-medium mt-1.5 px-0.5 truncate">
+                                {selected.name}
+                              </p>
                             )}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
+                          </div>
+                        </div>
+                      );
+                    }
+                  )}
 
-                {/* Tiebreaker */}
-                <div className="card-masters p-5">
-                  <label className="block text-sm font-bold text-masters-dark mb-2">
-                    Tiebreaker: Predict the winning score (relative to par)
-                  </label>
-                  <input
-                    type="number"
-                    className="input-masters max-w-xs"
-                    placeholder="e.g. -12"
-                    value={tiebreaker}
-                    onChange={(e) => setTiebreaker(e.target.value)}
-                  />
-                  <p className="text-xs text-gray-400 mt-1">
-                    If tied, the closest prediction to the actual winning score
-                    wins.
-                  </p>
+                  {/* Tiebreaker card in the grid */}
+                  <div className="card overflow-hidden sm:col-span-2 lg:col-span-1">
+                    <div className="px-3 py-2 bg-masters-sand">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-masters-dark">
+                        Tiebreaker
+                      </span>
+                    </div>
+                    <div className="p-2">
+                      <input
+                        type="number"
+                        className="w-full text-sm py-1.5 px-2 rounded border border-gray-200 bg-white focus:outline-none focus:border-masters-green focus:ring-1 focus:ring-masters-green/20"
+                        placeholder="e.g. -12"
+                        value={tiebreaker}
+                        onChange={(e) => setTiebreaker(e.target.value)}
+                      />
+                      <p className="text-[10px] text-gray-400 mt-1.5 px-0.5">
+                        Predict the winning score
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Submit */}
                 <button
                   onClick={handleSave}
-                  disabled={Object.keys(selections).length !== NUM_TIERS || saving}
-                  className="btn-masters w-full flex items-center justify-center gap-2 text-lg py-4"
+                  disabled={
+                    Object.keys(selections).length !== NUM_TIERS || saving
+                  }
+                  className="btn-masters w-full sm:w-auto flex items-center justify-center gap-2"
                 >
-                  {saving && <Loader2 className="w-5 h-5 animate-spin" />}
+                  {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                   {saving
                     ? "Saving..."
-                    : `Submit Picks (${Object.keys(selections).length}/${NUM_TIERS} selected)`}
+                    : `Submit Picks (${Object.keys(selections).length}/${NUM_TIERS})`}
                 </button>
               </div>
             )}
@@ -374,232 +334,249 @@ export default function DashboardClient({
         )}
 
         {tab === "leaderboard" && (
-          <div className="space-y-4">
-            <div className="card-masters p-5">
-              <div className="flex items-center gap-3 mb-1">
-                <Trophy className="w-6 h-6 text-masters-yellow" />
-                <h2 className="text-xl font-bold text-masters-dark">
-                  Leaderboard
-                </h2>
-              </div>
-              <p className="text-gray-500 text-sm">
-                Best {BEST_OF} of {NUM_TIERS} scores &middot; Lowest total wins
-                {tournament.winning_score != null && (
-                  <span className="ml-2">
-                    &middot; Winning score:{" "}
-                    <strong>{tournament.winning_score}</strong>
-                  </span>
-                )}
-              </p>
-            </div>
-
-            {leaderboard.length === 0 ? (
-              <div className="card-masters p-12 text-center">
-                <p className="text-gray-400">
-                  No complete teams yet. Be the first to submit your picks!
-                </p>
-              </div>
-            ) : (
-              leaderboard.map((entry, idx) => (
-                <LeaderboardCard
-                  key={entry.userId}
-                  entry={entry}
-                  rank={idx + 1}
-                  isCurrentUser={entry.userId === user.id}
-                  tournament={tournament}
-                />
-              ))
-            )}
-          </div>
+          <LeaderboardView
+            leaderboard={leaderboard}
+            currentUserId={user.id}
+            tournament={tournament}
+            isLive={isLive}
+          />
         )}
       </div>
     </div>
   );
 }
 
-function MyTeam({
+/* ── Team View ─────────────────────────────────────────── */
+
+function TeamView({
   picks,
   golfers,
   profile,
   tournament,
+  isLive,
 }: {
   picks: Pick[];
   golfers: Golfer[];
   profile: Profile;
   tournament: Tournament;
+  isLive: boolean;
 }) {
   const golferMap = new Map(golfers.map((g) => [g.id, g]));
-  const sortedPicks = [...picks].sort((a, b) => a.tier - b.tier);
-  const picksWithScores = sortedPicks.map((p) => {
-    const g = golferMap.get(p.golfer_id)!;
-    return { pick: p, golfer: g, score: effectiveScore(g) };
-  });
-  const sorted = [...picksWithScores].sort((a, b) => a.score - b.score);
-  const best4Ids = new Set(sorted.slice(0, BEST_OF).map((p) => p.golfer.id));
+  const withScores = picks
+    .map((p) => {
+      const g = golferMap.get(p.golfer_id)!;
+      return { pick: p, golfer: g, score: effectiveScore(g) };
+    })
+    .sort((a, b) => a.pick.tier - b.pick.tier);
+
+  const sorted = [...withScores].sort((a, b) => a.score - b.score);
+  const bestIds = new Set(sorted.slice(0, BEST_OF).map((p) => p.golfer.id));
+  const total = sorted.slice(0, BEST_OF).reduce((s, p) => s + p.score, 0);
 
   return (
-    <div className="card-masters overflow-hidden">
-      <div className="bg-masters-green text-white p-5">
-        <h2 className="text-xl font-bold">
-          {profile.display_name}&apos;s Team
-        </h2>
-        {profile.tiebreaker_score != null && (
-          <p className="text-green-200 text-sm mt-1">
-            Tiebreaker prediction: {profile.tiebreaker_score}
+    <div className="card overflow-hidden">
+      <div className="px-4 py-3 bg-masters-dark text-white flex items-center justify-between">
+        <div>
+          <p className="text-sm font-semibold">{profile.display_name}</p>
+          {profile.tiebreaker_score != null && (
+            <p className="text-[11px] text-green-200/70">
+              Tiebreaker: {profile.tiebreaker_score}
+            </p>
+          )}
+        </div>
+        {isLive && (
+          <p className="text-xl font-bold text-masters-yellow font-sans">
+            {total}
           </p>
         )}
       </div>
-      <div className="divide-y divide-gray-100">
-        {picksWithScores.map(({ pick, golfer, score }) => (
-          <div
-            key={pick.id}
-            className={`px-5 py-3.5 flex items-center justify-between ${
-              !best4Ids.has(golfer.id) ? "opacity-40" : ""
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <TierBadge tier={pick.tier} />
-              <div>
-                <span className="font-semibold">{golfer.name}</span>
-                {golfer.status === "cut" && (
-                  <span className="ml-2 text-xs text-red-500 font-sans font-semibold inline-flex items-center gap-1">
-                    <Scissors className="w-3 h-3" /> CUT
-                  </span>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center gap-3 font-sans">
-              {best4Ids.has(golfer.id) && (
-                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-semibold">
-                  COUNTS
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 divide-gray-50">
+        {withScores.map(({ pick, golfer, score }) => {
+          const color = TIER_COLORS[pick.tier];
+          const counts = bestIds.has(golfer.id);
+          return (
+            <div
+              key={pick.id}
+              className={`px-3 py-2.5 flex items-center justify-between border-b border-gray-50 sm:border-b-0 sm:border-r last:border-r-0 ${
+                !counts && isLive ? "opacity-35" : ""
+              }`}
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <span
+                  className={`shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold ${color.bg} ${color.text}`}
+                >
+                  {pick.tier}
                 </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate">{golfer.name}</p>
+                  <p className="text-[10px] text-gray-400">
+                    {TIER_LABELS[pick.tier]}
+                    {golfer.status === "cut" && (
+                      <span className="text-red-400 ml-1 inline-flex items-center gap-0.5">
+                        <Scissors className="w-2.5 h-2.5" /> CUT
+                      </span>
+                    )}
+                  </p>
+                </div>
+              </div>
+              {isLive && (
+                <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                  {counts && (
+                    <span className="text-[8px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-bold uppercase">
+                      Counts
+                    </span>
+                  )}
+                  <span className="text-sm font-semibold font-sans tabular-nums">
+                    {score}
+                  </span>
+                </div>
               )}
-              <span
-                className={`font-bold ${score < 0 ? "text-red-600" : "text-gray-800"}`}
-              >
-                {tournament.status !== "upcoming" && tournament.status !== "drafting"
-                  ? (score > 0 ? `+${score}` : score === 0 ? "E" : score)
-                  : "—"}
-              </span>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
-      {tournament.status !== "upcoming" && tournament.status !== "drafting" && (
-        <div className="border-t-2 border-masters-yellow bg-masters-sand/30 px-5 py-4 flex justify-between items-center">
-          <span className="font-bold text-masters-dark">
-            Total (Best {BEST_OF})
-          </span>
-          <span className="text-2xl font-bold text-masters-green font-sans">
-            {sorted
-              .slice(0, BEST_OF)
-              .reduce((s, p) => s + p.score, 0)}
-          </span>
-        </div>
-      )}
     </div>
   );
 }
 
-function LeaderboardCard({
-  entry,
-  rank,
-  isCurrentUser,
+/* ── Leaderboard ───────────────────────────────────────── */
+
+function LeaderboardView({
+  leaderboard,
+  currentUserId,
   tournament,
+  isLive,
 }: {
-  entry: {
+  leaderboard: {
     userId: string;
     profile?: Profile;
     picks: { golfer: Golfer; tier: number; score: number }[];
-    best4Ids: Set<string>;
+    bestIds: Set<string>;
     total: number;
     tiebreakerDiff: number | null;
-  };
-  rank: number;
-  isCurrentUser: boolean;
+  }[];
+  currentUserId: string;
   tournament: Tournament;
+  isLive: boolean;
 }) {
-  const [expanded, setExpanded] = useState(isCurrentUser);
-  const rankColors: Record<number, string> = {
-    1: "bg-yellow-400 text-yellow-900",
-    2: "bg-gray-300 text-gray-700",
-    3: "bg-amber-600 text-white",
-  };
+  const [expanded, setExpanded] = useState<string | null>(currentUserId);
+
+  if (leaderboard.length === 0) {
+    return (
+      <div className="card p-10 text-center">
+        <p className="text-sm text-gray-400">
+          No complete teams yet. Be the first to submit!
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div
-      className={`card-masters overflow-hidden ${isCurrentUser ? "ring-2 ring-masters-green" : ""}`}
-    >
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="w-full px-5 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
-      >
-        <div className="flex items-center gap-3">
-          <span
-            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold font-sans ${
-              rankColors[rank] || "bg-gray-100 text-gray-600"
-            }`}
-          >
-            {rank}
+    <div className="card overflow-hidden">
+      <div className="px-4 py-2.5 bg-masters-sand flex items-center gap-2 border-b border-gray-100">
+        <Trophy className="w-4 h-4 text-masters-gold" />
+        <span className="text-xs font-bold text-masters-dark uppercase tracking-wider">
+          Leaderboard
+        </span>
+        {tournament.winning_score != null && (
+          <span className="text-[11px] text-gray-400 ml-auto">
+            Winner: {tournament.winning_score}
           </span>
-          <div className="text-left">
-            <span className="font-bold text-masters-dark">
-              {entry.profile?.display_name ?? "Unknown"}
-            </span>
-            {isCurrentUser && (
-              <span className="text-xs text-masters-green ml-2">(you)</span>
-            )}
-            {entry.profile?.tiebreaker_score != null && (
-              <span className="text-xs text-gray-400 ml-2 font-sans">
-                TB: {entry.profile.tiebreaker_score}
-                {entry.tiebreakerDiff != null && ` (±${entry.tiebreakerDiff})`}
-              </span>
-            )}
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="text-xl font-bold text-masters-green font-sans">
-            {tournament.status !== "upcoming" && tournament.status !== "drafting"
-              ? entry.total
-              : "—"}
-          </span>
-          {expanded ? (
-            <ChevronUp className="w-5 h-5 text-gray-400" />
-          ) : (
-            <ChevronDown className="w-5 h-5 text-gray-400" />
-          )}
-        </div>
-      </button>
+        )}
+      </div>
 
-      {expanded && (
-        <div className="border-t border-gray-100 divide-y divide-gray-50">
-          {entry.picks
-            .sort((a, b) => a.tier - b.tier)
-            .map((p) => (
-              <div
-                key={p.golfer.id}
-                className={`px-5 py-2.5 flex items-center justify-between text-sm ${
-                  !entry.best4Ids.has(p.golfer.id) ? "opacity-40" : ""
+      <div className="divide-y divide-gray-50">
+        {leaderboard.map((entry, idx) => {
+          const rank = idx + 1;
+          const isMe = entry.userId === currentUserId;
+          const isOpen = expanded === entry.userId;
+          const rankBg =
+            rank === 1
+              ? "bg-amber-100 text-amber-800"
+              : rank === 2
+                ? "bg-slate-100 text-slate-700"
+                : rank === 3
+                  ? "bg-orange-100 text-orange-800"
+                  : "bg-gray-50 text-gray-500";
+
+          return (
+            <div key={entry.userId}>
+              <button
+                onClick={() =>
+                  setExpanded(isOpen ? null : entry.userId)
+                }
+                className={`w-full px-4 py-2.5 flex items-center gap-3 hover:bg-gray-50/50 transition-colors ${
+                  isMe ? "bg-emerald-50/40" : ""
                 }`}
               >
-                <div className="flex items-center gap-2.5">
-                  <TierBadge tier={p.tier} />
-                  <span className="font-medium">{p.golfer.name}</span>
-                  {p.golfer.status === "cut" && (
-                    <span className="text-xs text-red-500 font-sans font-semibold">
-                      CUT
+                <span
+                  className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${rankBg}`}
+                >
+                  {rank}
+                </span>
+                <span className="text-sm font-medium text-left flex-1 truncate">
+                  {entry.profile?.display_name ?? "Unknown"}
+                  {isMe && (
+                    <span className="text-[10px] text-masters-green ml-1">
+                      (you)
                     </span>
                   )}
-                </div>
-                <span className="font-mono font-semibold text-gray-700">
-                  {tournament.status !== "upcoming" && tournament.status !== "drafting"
-                    ? p.score
-                    : "—"}
                 </span>
-              </div>
-            ))}
-        </div>
-      )}
+                {entry.profile?.tiebreaker_score != null && (
+                  <span className="text-[10px] text-gray-400 font-sans hidden sm:block">
+                    TB: {entry.profile.tiebreaker_score}
+                    {entry.tiebreakerDiff != null &&
+                      ` (±${entry.tiebreakerDiff})`}
+                  </span>
+                )}
+                <span className="text-base font-bold text-masters-green font-sans tabular-nums">
+                  {isLive ? entry.total : "—"}
+                </span>
+              </button>
+
+              {isOpen && (
+                <div className="px-4 pb-3 pt-1 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-1.5">
+                  {entry.picks
+                    .sort((a, b) => a.tier - b.tier)
+                    .map((p) => {
+                      const color = TIER_COLORS[p.tier];
+                      const counts = entry.bestIds.has(p.golfer.id);
+                      return (
+                        <div
+                          key={p.golfer.id}
+                          className={`rounded-md px-2 py-1.5 ${color.bg} ${
+                            !counts && isLive ? "opacity-30" : ""
+                          }`}
+                        >
+                          <p className="text-[10px] text-gray-500 font-sans">
+                            T{p.tier}
+                          </p>
+                          <p
+                            className={`text-xs font-medium truncate ${color.text}`}
+                          >
+                            {p.golfer.name}
+                          </p>
+                          <div className="flex items-center justify-between mt-0.5">
+                            {p.golfer.status === "cut" && (
+                              <span className="text-[9px] text-red-500 font-bold">
+                                CUT
+                              </span>
+                            )}
+                            {isLive && (
+                              <span className="text-[11px] font-semibold font-sans ml-auto">
+                                {p.score}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

@@ -25,9 +25,7 @@ export default function AuthForm() {
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: {
-            data: { display_name: displayName },
-          },
+          options: { data: { display_name: displayName } },
         });
         if (error) throw error;
       } else {
@@ -40,31 +38,27 @@ export default function AuthForm() {
       router.push("/dashboard");
       router.refresh();
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Something went wrong";
-      setError(message);
+      setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="card-masters p-8 w-full max-w-md mx-auto">
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-masters-dark">
-          {mode === "login" ? "Welcome Back" : "Join the Pool"}
-        </h2>
-        <p className="text-sm text-gray-500 mt-1">
-          {mode === "login"
-            ? "Sign in to manage your picks"
-            : "Create your account to start drafting"}
-        </p>
-      </div>
+    <div className="card p-6">
+      <h2 className="text-lg font-bold text-masters-dark mb-1">
+        {mode === "login" ? "Welcome Back" : "Join the Pool"}
+      </h2>
+      <p className="text-xs text-gray-400 mb-5">
+        {mode === "login"
+          ? "Sign in to manage your picks"
+          : "Create your account to start drafting"}
+      </p>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-3">
         {mode === "signup" && (
           <div>
-            <label className="block text-sm font-semibold mb-1.5 text-gray-700">
+            <label className="block text-xs font-semibold text-gray-600 mb-1">
               Display Name
             </label>
             <input
@@ -78,7 +72,7 @@ export default function AuthForm() {
           </div>
         )}
         <div>
-          <label className="block text-sm font-semibold mb-1.5 text-gray-700">
+          <label className="block text-xs font-semibold text-gray-600 mb-1">
             Email
           </label>
           <input
@@ -91,7 +85,7 @@ export default function AuthForm() {
           />
         </div>
         <div>
-          <label className="block text-sm font-semibold mb-1.5 text-gray-700">
+          <label className="block text-xs font-semibold text-gray-600 mb-1">
             Password
           </label>
           <input
@@ -106,9 +100,9 @@ export default function AuthForm() {
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2.5 rounded-md text-sm">
+          <p className="text-xs text-red-600 bg-red-50 border border-red-100 rounded px-3 py-2">
             {error}
-          </div>
+          </p>
         )}
 
         <button
@@ -116,24 +110,22 @@ export default function AuthForm() {
           disabled={loading}
           className="btn-masters w-full flex items-center justify-center gap-2"
         >
-          {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+          {loading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
           {mode === "login" ? "Sign In" : "Create Account"}
         </button>
       </form>
 
-      <div className="mt-6 text-center">
-        <button
-          onClick={() => {
-            setMode(mode === "login" ? "signup" : "login");
-            setError("");
-          }}
-          className="text-sm text-masters-green hover:text-masters-dark underline underline-offset-2"
-        >
-          {mode === "login"
-            ? "Need an account? Sign up"
-            : "Already have an account? Sign in"}
-        </button>
-      </div>
+      <button
+        onClick={() => {
+          setMode(mode === "login" ? "signup" : "login");
+          setError("");
+        }}
+        className="mt-4 w-full text-center text-xs text-masters-green hover:text-masters-dark underline underline-offset-2"
+      >
+        {mode === "login"
+          ? "Need an account? Sign up"
+          : "Already have an account? Sign in"}
+      </button>
     </div>
   );
 }
