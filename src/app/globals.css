@@ -1,0 +1,103 @@
+@import "tailwindcss";
+
+:root {
+  --masters-green: #006747;
+  --masters-dark: #004d35;
+  --masters-yellow: #f2c75c;
+  --masters-gold: #c8a951;
+  --masters-cream: #fdf8ef;
+  --masters-sand: #f5eedc;
+  --background: #fdf8ef;
+  --foreground: #1a2e1a;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-masters-green: var(--masters-green);
+  --color-masters-dark: var(--masters-dark);
+  --color-masters-yellow: var(--masters-yellow);
+  --color-masters-gold: var(--masters-gold);
+  --color-masters-cream: var(--masters-cream);
+  --color-masters-sand: var(--masters-sand);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: "Georgia", "Times New Roman", serif;
+}
+
+.btn-masters {
+  background: var(--masters-green);
+  color: white;
+  padding: 0.75rem 2rem;
+  border-radius: 0.375rem;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  transition: all 0.2s;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-masters:hover {
+  background: var(--masters-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 103, 71, 0.3);
+}
+
+.btn-masters:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.card-masters {
+  background: white;
+  border: 1px solid #e5dfd3;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.input-masters {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1.5px solid #d4cfc3;
+  border-radius: 0.375rem;
+  background: white;
+  font-family: "Georgia", "Times New Roman", serif;
+  font-size: 0.95rem;
+  transition: border-color 0.2s;
+}
+
+.input-masters:focus {
+  outline: none;
+  border-color: var(--masters-green);
+  box-shadow: 0 0 0 3px rgba(0, 103, 71, 0.1);
+}
+
+.tier-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: system-ui, sans-serif;
+}
+
+.azalea-divider {
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--masters-yellow),
+    var(--masters-gold),
+    var(--masters-yellow),
+    transparent
+  );
+}
