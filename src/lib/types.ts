@@ -66,14 +66,14 @@ export const TIER_COLORS: Record<number, { bg: string; text: string }> = {
   3: { bg: "bg-amber-600", text: "text-white" },
   4: { bg: "bg-emerald-600", text: "text-white" },
   5: { bg: "bg-sky-600", text: "text-white" },
-  6: { bg: "bg-purple-600", text: "text-white" },
+  6: { bg: "bg-red-600", text: "text-white" },
 };
 
 export const TIER_LABELS: Record<number, string> = {
   1: "Elite",
   2: "Contenders",
   3: "Sleepers",
-  4: "Mid-Pack",
-  5: "Long Shots",
-  6: "Dark Horses",
+  4: "Long Shots",
+  5: "Dark Horses",
+  6: "Canadians",
 };
