@@ -65,7 +65,7 @@ create table public.golfers (
   tournament_id uuid not null references public.tournaments(id) on delete cascade,
   name text not null,
   world_ranking integer not null,
-  tier integer not null check (tier between 1 and 6),
+  tier integer not null check (tier between 1 and 7),
   espn_player_id text,
   score_r1 integer,
   score_r2 integer,
@@ -89,7 +89,7 @@ create table public.picks (
   user_id uuid not null references public.profiles(id) on delete cascade,
   tournament_id uuid not null references public.tournaments(id) on delete cascade,
   golfer_id uuid not null references public.golfers(id) on delete cascade,
-  tier integer not null check (tier between 1 and 6),
+  tier integer not null check (tier between 1 and 7),
   created_at timestamptz default now(),
   unique (user_id, tournament_id, tier)
 );

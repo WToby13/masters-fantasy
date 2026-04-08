@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { createClient } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import type { Tournament, Golfer, Profile, Pick } from "@/lib/types";
-import { TIER_COLORS, TIER_LABELS } from "@/lib/types";
+import { TIER_COLORS, TIER_LABELS, NUM_TIERS, BEST_OF } from "@/lib/types";
 import {
   LogOut,
   TreePine,
@@ -67,16 +67,16 @@ export default function DashboardClient({
     userPicks.length === 0 ? 1 : null
   );
   const [tab, setTab] = useState<"picks" | "leaderboard">(
-    userPicks.length === 6 ? "leaderboard" : "picks"
+    userPicks.length === NUM_TIERS ? "leaderboard" : "picks"
   );
 
-  const hasPicks = userPicks.length === 6;
+  const hasPicks = userPicks.length === NUM_TIERS;
   const isDraftOpen =
     tournament?.status === "drafting" || tournament?.status === "upcoming";
 
   const golfersByTier = useMemo(() => {
     const map: Record<number, Golfer[]> = {};
-    for (let t = 1; t <= 6; t++) map[t] = [];
+    for (let t = 1; t <= NUM_TIERS; t++) map[t] = [];
     golfers.forEach((g) => map[g.tier]?.push(g));
     return map;
   }, [golfers]);
@@ -99,7 +99,7 @@ export default function DashboardClient({
           }))
           .sort((a, b) => a.score - b.score);
 
-        const best4 = scores.slice(0, 4);
+        const best4 = scores.slice(0, BEST_OF);
         const total = best4.reduce((s, p) => s + p.score, 0);
         const prof = profileMap.get(userId);
         const tb = prof?.tiebreaker_score;
@@ -117,7 +117,7 @@ export default function DashboardClient({
           tiebreakerDiff: tbDiff,
         };
       })
-      .filter((e) => e.picks.length === 6)
+      .filter((e) => e.picks.length === NUM_TIERS)
       .sort((a, b) => {
         if (a.total !== b.total) return a.total - b.total;
         if (a.tiebreakerDiff != null && b.tiebreakerDiff != null)
@@ -127,11 +127,11 @@ export default function DashboardClient({
   }, [allPicks, allProfiles, tournament]);
 
   async function handleSave() {
-    if (Object.keys(selections).length !== 6) return;
+    if (Object.keys(selections).length !== NUM_TIERS) return;
     setSaving(true);
 
     try {
-      for (let tier = 1; tier <= 6; tier++) {
+      for (let tier = 1; tier <= NUM_TIERS; tier++) {
         const existing = userPicks.find((p) => p.tier === tier);
         if (existing) {
           await supabase
@@ -262,12 +262,12 @@ export default function DashboardClient({
                       : "Draft Your Team"}
                   </h2>
                   <p className="text-gray-500 text-sm">
-                    Select one golfer from each tier. Your best 4 of 6 scores
+                    Select one golfer from each tier. Your best {BEST_OF} of {NUM_TIERS} scores
                     will count.
                   </p>
                 </div>
 
-                {[1, 2, 3, 4, 5, 6].map((tier) => (
+                {Array.from({ length: NUM_TIERS }, (_, i) => i + 1).map((tier) => (
                   <div key={tier} className="card-masters overflow-hidden">
                     <button
                       onClick={() =>
@@ -360,13 +360,13 @@ export default function DashboardClient({
                 {/* Submit */}
                 <button
                   onClick={handleSave}
-                  disabled={Object.keys(selections).length !== 6 || saving}
+                  disabled={Object.keys(selections).length !== NUM_TIERS || saving}
                   className="btn-masters w-full flex items-center justify-center gap-2 text-lg py-4"
                 >
                   {saving && <Loader2 className="w-5 h-5 animate-spin" />}
                   {saving
                     ? "Saving..."
-                    : `Submit Picks (${Object.keys(selections).length}/6 selected)`}
+                    : `Submit Picks (${Object.keys(selections).length}/${NUM_TIERS} selected)`}
                 </button>
               </div>
             )}
@@ -383,7 +383,7 @@ export default function DashboardClient({
                 </h2>
               </div>
               <p className="text-gray-500 text-sm">
-                Best 4 of 6 scores &middot; Lowest total wins
+                Best {BEST_OF} of {NUM_TIERS} scores &middot; Lowest total wins
                 {tournament.winning_score != null && (
                   <span className="ml-2">
                     &middot; Winning score:{" "}
@@ -435,7 +435,7 @@ function MyTeam({
     return { pick: p, golfer: g, score: effectiveScore(g) };
   });
   const sorted = [...picksWithScores].sort((a, b) => a.score - b.score);
-  const best4Ids = new Set(sorted.slice(0, 4).map((p) => p.golfer.id));
+  const best4Ids = new Set(sorted.slice(0, BEST_OF).map((p) => p.golfer.id));
 
   return (
     <div className="card-masters overflow-hidden">
@@ -488,11 +488,11 @@ function MyTeam({
       {tournament.status !== "upcoming" && tournament.status !== "drafting" && (
         <div className="border-t-2 border-masters-yellow bg-masters-sand/30 px-5 py-4 flex justify-between items-center">
           <span className="font-bold text-masters-dark">
-            Total (Best 4)
+            Total (Best {BEST_OF})
           </span>
           <span className="text-2xl font-bold text-masters-green font-sans">
             {sorted
-              .slice(0, 4)
+              .slice(0, BEST_OF)
               .reduce((s, p) => s + p.score, 0)}
           </span>
         </div>

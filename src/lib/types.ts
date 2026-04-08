@@ -60,13 +60,17 @@ export interface LeaderboardEntry {
   tiebreaker_diff?: number;
 }
 
+export const NUM_TIERS = 7;
+export const BEST_OF = 4;
+
 export const TIER_COLORS: Record<number, { bg: string; text: string }> = {
   1: { bg: "bg-yellow-400", text: "text-yellow-900" },
   2: { bg: "bg-gray-300", text: "text-gray-800" },
   3: { bg: "bg-amber-600", text: "text-white" },
   4: { bg: "bg-emerald-600", text: "text-white" },
   5: { bg: "bg-sky-600", text: "text-white" },
-  6: { bg: "bg-red-600", text: "text-white" },
+  6: { bg: "bg-purple-600", text: "text-white" },
+  7: { bg: "bg-red-600", text: "text-white" },
 };
 
 export const TIER_LABELS: Record<number, string> = {
@@ -75,5 +79,6 @@ export const TIER_LABELS: Record<number, string> = {
   3: "Sleepers",
   4: "Long Shots",
   5: "Dark Horses",
-  6: "Canadians",
+  6: "The Field",
+  7: "Canadians",
 };

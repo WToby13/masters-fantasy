@@ -30,7 +30,7 @@ export default async function Home() {
             Masters Fantasy Pool
           </h1>
           <p className="text-lg text-green-100 max-w-2xl mx-auto mb-2">
-            Draft your team across six tiers. Your best four scores count.
+            Draft your team across seven tiers. Your best four scores count.
             <br />
             Lowest total wins the green jacket.
           </p>
@@ -50,8 +50,8 @@ export default async function Home() {
             </div>
             <h3 className="font-bold text-lg mb-2">Draft Your Team</h3>
             <p className="text-gray-600 text-sm">
-              Pick one golfer from each of the 6 tiers, ranked by world
-              standings.
+              Pick one golfer from each of the 7 tiers, including a
+              dedicated Canadian tier.
             </p>
           </div>
           <div className="text-center">
