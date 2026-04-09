@@ -32,10 +32,27 @@ export interface Golfer {
   created_at: string;
 }
 
+export interface Pool {
+  id: string;
+  name: string;
+  tournament_id: string;
+  invite_code: string;
+  created_by: string;
+  created_at: string;
+}
+
+export interface PoolMember {
+  id: string;
+  pool_id: string;
+  user_id: string;
+  joined_at: string;
+}
+
 export interface Pick {
   id: string;
   user_id: string;
   tournament_id: string;
+  pool_id: string | null;
   golfer_id: string;
   tier: number;
   created_at: string;

@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase-server";
 import { redirect } from "next/navigation";
-import DashboardClient from "@/components/DashboardClient";
-import type { Tournament, Golfer, Profile, Pick } from "@/lib/types";
+import PoolLobby from "@/components/PoolLobby";
+import type { Tournament, Profile, Pool, PoolMember } from "@/lib/types";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -25,45 +25,25 @@ export default async function DashboardPage() {
 
   const tournament = tournaments?.[0] as Tournament | undefined;
 
-  let golfers: Golfer[] = [];
-  let userPicks: Pick[] = [];
-  let allPicks: (Pick & { golfer: Golfer; profile: Profile })[] = [];
-  let allProfiles: Profile[] = [];
+  let userPools: (PoolMember & { pool: Pool })[] = [];
 
   if (tournament) {
-    const { data: g } = await supabase
-      .from("golfers")
-      .select("*")
-      .eq("tournament_id", tournament.id)
-      .order("world_ranking", { ascending: true });
-    golfers = (g as Golfer[]) || [];
-
-    const { data: p } = await supabase
-      .from("picks")
-      .select("*")
-      .eq("tournament_id", tournament.id)
+    const { data: memberships } = await supabase
+      .from("pool_members")
+      .select("*, pool:pools(*)")
       .eq("user_id", user.id);
-    userPicks = (p as Pick[]) || [];
 
-    const { data: ap } = await supabase
-      .from("picks")
-      .select("*, golfer:golfers(*)")
-      .eq("tournament_id", tournament.id);
-    allPicks = (ap as (Pick & { golfer: Golfer; profile: Profile })[]) || [];
-
-    const { data: profs } = await supabase.from("profiles").select("*");
-    allProfiles = (profs as Profile[]) || [];
+    userPools = ((memberships || []) as (PoolMember & { pool: Pool })[]).filter(
+      (m) => m.pool?.tournament_id === tournament?.id
+    );
   }
 
   return (
-    <DashboardClient
+    <PoolLobby
       user={user}
       profile={profile as Profile}
       tournament={tournament || null}
-      golfers={golfers}
-      userPicks={userPicks}
-      allPicks={allPicks}
-      allProfiles={allProfiles}
+      userPools={userPools}
     />
   );
 }

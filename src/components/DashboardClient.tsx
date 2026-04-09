@@ -3,9 +3,9 @@
 import { useState, useMemo } from "react";
 import { createClient } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
-import type { Tournament, Golfer, Profile, Pick } from "@/lib/types";
+import type { Tournament, Golfer, Profile, Pick, Pool } from "@/lib/types";
 import { TIER_LABELS, NUM_TIERS, BEST_OF } from "@/lib/types";
-import { LogOut, Loader2 } from "lucide-react";
+import { LogOut, Loader2, ArrowLeft, Copy, Check } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 
 interface Props {
@@ -16,6 +16,7 @@ interface Props {
   userPicks: Pick[];
   allPicks: (Pick & { golfer: Golfer; profile: Profile })[];
   allProfiles: Profile[];
+  pool: Pool;
 }
 
 function effectiveScore(golfer: Golfer): number {
@@ -37,9 +38,11 @@ export default function DashboardClient({
   userPicks,
   allPicks,
   allProfiles,
+  pool,
 }: Props) {
   const supabase = createClient();
   const router = useRouter();
+  const [codeCopied, setCodeCopied] = useState(false);
   const [selections, setSelections] = useState<Record<number, string>>(() => {
     const map: Record<number, string> = {};
     userPicks.forEach((p) => {
@@ -122,6 +125,7 @@ export default function DashboardClient({
           await supabase.from("picks").insert({
             user_id: user.id,
             tournament_id: tournament!.id,
+            pool_id: pool.id,
             golfer_id: selections[tier],
             tier,
           });
@@ -170,9 +174,38 @@ export default function DashboardClient({
       {/* Header */}
       <header className="bg-masters-green text-white">
         <div className="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-between">
-          <span className="text-masters-yellow text-xs font-semibold tracking-[0.15em] uppercase">
-            {tournament.name}
-          </span>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => router.push("/dashboard")}
+              className="text-white/40 hover:text-white transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+            <div>
+              <span className="text-masters-yellow text-xs font-semibold tracking-[0.15em] uppercase">
+                {pool.name}
+              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-white/30 text-[10px]">
+                  {tournament.name} &middot; Code: {pool.invite_code}
+                </span>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(pool.invite_code);
+                    setCodeCopied(true);
+                    setTimeout(() => setCodeCopied(false), 2000);
+                  }}
+                  className="text-white/20 hover:text-white/60 transition-colors"
+                >
+                  {codeCopied ? (
+                    <Check className="w-3 h-3" />
+                  ) : (
+                    <Copy className="w-3 h-3" />
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
           <div className="flex items-center gap-3">
             <span className="text-white/60 text-xs">
               {profile?.display_name}

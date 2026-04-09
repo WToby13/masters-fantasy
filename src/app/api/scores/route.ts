@@ -9,7 +9,7 @@ import { NextResponse } from "next/server";
  * 
  * Body: { tournament_id: string, espn_event_id?: string }
  * 
- * The espn_event_id for The Masters 2025 is "401703504" (update yearly).
+ * The espn_event_id for The Masters 2026 is "401811941".
  */
 
 interface ESPNCompetitor {
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No golfers found" }, { status: 404 });
 
     // Fetch from ESPN public API
-    const eventId = espn_event_id || "401703504";
+    const eventId = espn_event_id || "401811941";
     const url = `https://site.api.espn.com/apis/site/v2/sports/golf/pga/scoreboard?event=${eventId}`;
     const res = await fetch(url, { next: { revalidate: 0 } });
 
