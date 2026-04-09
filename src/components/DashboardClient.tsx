@@ -67,8 +67,10 @@ export default function DashboardClient({
   );
 
   const hasPicks = userPicks.length === NUM_TIERS;
-  const isDraftOpen =
+  const isDraftPhase =
     tournament?.status === "drafting" || tournament?.status === "upcoming";
+  const canEdit = isDraftPhase || !hasPicks;
+  const picksLocked = hasPicks && !isDraftPhase;
 
   const golfersByTier = useMemo(() => {
     const map: Record<number, Golfer[]> = {};
@@ -120,6 +122,7 @@ export default function DashboardClient({
 
   async function handleSave() {
     if (Object.keys(selections).length !== NUM_TIERS) return;
+    if (!canEdit) return;
     setSaving(true);
     try {
       for (let tier = 1; tier <= NUM_TIERS; tier++) {
@@ -257,7 +260,7 @@ export default function DashboardClient({
               }`}
             >
               {t === "picks"
-                ? hasPicks && !isDraftOpen
+                ? picksLocked
                   ? "My Team"
                   : "Draft"
                 : "Leaderboard"}
@@ -273,7 +276,7 @@ export default function DashboardClient({
       <div className="max-w-7xl mx-auto w-full px-4 py-4 flex-1">
         {tab === "picks" && (
           <>
-            {hasPicks && !isDraftOpen ? (
+            {picksLocked ? (
               <TeamView
                 picks={userPicks}
                 golfers={golfers}
@@ -283,6 +286,16 @@ export default function DashboardClient({
               />
             ) : (
               <div>
+                {!isDraftPhase && (
+                  <div className="mb-4 px-4 py-3 rounded-lg bg-masters-yellow/15 border border-masters-yellow/30">
+                    <p className="text-xs font-semibold text-masters-green">
+                      The tournament is underway — picks lock once submitted.
+                    </p>
+                    <p className="text-[11px] text-masters-green/50 mt-0.5">
+                      Choose carefully, you won&apos;t be able to change your lineup after submitting.
+                    </p>
+                  </div>
+                )}
                 {/* Tier grid — each card shows all players with radio select */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   {Array.from({ length: NUM_TIERS }, (_, i) => i + 1).map(
