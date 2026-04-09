@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
-export default function AuthForm() {
+export default function AuthForm({ redirectTo }: { redirectTo?: string }) {
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -35,7 +35,7 @@ export default function AuthForm() {
         });
         if (error) throw error;
       }
-      router.push("/dashboard");
+      router.push(redirectTo || "/dashboard");
       router.refresh();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong");

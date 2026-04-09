@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase-server";
+import { createAdminClient } from "@/lib/supabase-admin";
 import { redirect } from "next/navigation";
 import JoinClient from "@/components/JoinClient";
 import type { Pool } from "@/lib/types";
@@ -22,18 +23,27 @@ export default async function JoinPage({
 
   if (!pool) redirect("/dashboard");
 
+  const typedPool = pool as Pool;
+
   if (user) {
     const { data: existing } = await supabase
       .from("pool_members")
       .select("id")
-      .eq("pool_id", (pool as Pool).id)
+      .eq("pool_id", typedPool.id)
       .eq("user_id", user.id)
       .single();
 
     if (existing) {
-      redirect(`/pool/${(pool as Pool).id}`);
+      redirect(`/pool/${typedPool.id}`);
     }
+
+    const admin = createAdminClient();
+    await admin.from("pool_members").insert({
+      pool_id: typedPool.id,
+      user_id: user.id,
+    });
+    redirect(`/pool/${typedPool.id}`);
   }
 
-  return <JoinClient pool={pool as Pool} isLoggedIn={!!user} />;
+  return <JoinClient pool={typedPool} />;
 }

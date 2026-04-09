@@ -2,13 +2,18 @@ import { createClient } from "@/lib/supabase-server";
 import { redirect } from "next/navigation";
 import AuthForm from "@/components/AuthForm";
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
+  const { next } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (user) redirect("/dashboard");
+  if (user) redirect(next || "/dashboard");
 
   return (
     <main className="min-h-screen flex flex-col bg-masters-cream">
@@ -87,7 +92,7 @@ export default async function Home() {
           </div>
         </div>
 
-        <AuthForm />
+        <AuthForm redirectTo={next} />
       </section>
 
       <footer className="bg-masters-green text-white/30 text-center py-4 text-xs">
