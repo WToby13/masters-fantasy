@@ -5,7 +5,14 @@ import { createClient } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import type { Tournament, Golfer, Profile, Pick, Pool } from "@/lib/types";
 import { TIER_LABELS, NUM_TIERS, BEST_OF } from "@/lib/types";
-import { LogOut, Loader2, ArrowLeft, Copy, Check } from "lucide-react";
+import {
+  LogOut,
+  Loader2,
+  ArrowLeft,
+  Link2,
+  Check,
+  CheckCircle2,
+} from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 
 interface Props {
@@ -42,7 +49,7 @@ export default function DashboardClient({
 }: Props) {
   const supabase = createClient();
   const router = useRouter();
-  const [codeCopied, setCodeCopied] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const [selections, setSelections] = useState<Record<number, string>>(() => {
     const map: Record<number, string> = {};
     userPicks.forEach((p) => {
@@ -54,6 +61,7 @@ export default function DashboardClient({
     profile?.tiebreaker_score?.toString() ?? ""
   );
   const [saving, setSaving] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
   const [tab, setTab] = useState<"picks" | "leaderboard">(
     userPicks.length === NUM_TIERS ? "leaderboard" : "picks"
   );
@@ -137,7 +145,12 @@ export default function DashboardClient({
           .update({ tiebreaker_score: parseInt(tiebreaker) })
           .eq("id", user.id);
       }
-      router.refresh();
+      setShowConfirmation(true);
+      setTimeout(() => {
+        setShowConfirmation(false);
+        setTab("leaderboard");
+        router.refresh();
+      }, 2000);
     } catch (err) {
       console.error("Save failed:", err);
     } finally {
@@ -187,20 +200,29 @@ export default function DashboardClient({
               </span>
               <div className="flex items-center gap-1.5">
                 <span className="text-white/30 text-[10px]">
-                  {tournament.name} &middot; Code: {pool.invite_code}
+                  {tournament.name}
                 </span>
                 <button
                   onClick={() => {
-                    navigator.clipboard.writeText(pool.invite_code);
-                    setCodeCopied(true);
-                    setTimeout(() => setCodeCopied(false), 2000);
+                    const url = `${window.location.origin}/join/${pool.invite_code}`;
+                    navigator.clipboard.writeText(url);
+                    setLinkCopied(true);
+                    setTimeout(() => setLinkCopied(false), 2500);
                   }}
-                  className="text-white/20 hover:text-white/60 transition-colors"
+                  className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full transition-all ${
+                    linkCopied
+                      ? "bg-white/20 text-white"
+                      : "text-white/30 hover:text-white/60 hover:bg-white/10"
+                  }`}
                 >
-                  {codeCopied ? (
-                    <Check className="w-3 h-3" />
+                  {linkCopied ? (
+                    <>
+                      <Check className="w-2.5 h-2.5" /> Copied!
+                    </>
                   ) : (
-                    <Copy className="w-3 h-3" />
+                    <>
+                      <Link2 className="w-2.5 h-2.5" /> Invite
+                    </>
                   )}
                 </button>
               </div>
@@ -228,10 +250,10 @@ export default function DashboardClient({
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`px-4 py-1.5 rounded text-xs font-semibold transition-all ${
+              className={`px-4 py-1.5 rounded text-xs font-semibold transition-all duration-200 ${
                 tab === t
-                  ? "bg-masters-green text-white"
-                  : "text-masters-green/60 hover:text-masters-green"
+                  ? "bg-masters-green text-white shadow-sm"
+                  : "text-masters-green/50 hover:text-masters-green hover:bg-masters-beige/50"
               }`}
             >
               {t === "picks"
@@ -300,20 +322,42 @@ export default function DashboardClient({
                 </div>
 
                 {/* Submit */}
-                <div className="mt-4">
+                <div className="mt-4 flex items-center gap-4">
                   <button
                     onClick={handleSave}
                     disabled={
                       Object.keys(selections).length !== NUM_TIERS || saving
                     }
-                    className="btn-masters flex items-center gap-2"
+                    className="btn-primary text-base px-8 py-3"
                   >
                     {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                     {saving
                       ? "Saving..."
                       : `Submit Picks (${Object.keys(selections).length}/${NUM_TIERS})`}
                   </button>
+                  {Object.keys(selections).length < NUM_TIERS && (
+                    <span className="text-xs text-masters-green/40">
+                      Select one golfer from each tier
+                    </span>
+                  )}
                 </div>
+
+                {/* Confirmation overlay */}
+                {showConfirmation && (
+                  <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 backdrop-blur-sm">
+                    <div className="bg-white rounded-xl p-8 max-w-xs text-center shadow-xl animate-[fadeIn_0.3s_ease]">
+                      <div className="w-14 h-14 rounded-full bg-masters-green-light flex items-center justify-center mx-auto mb-4">
+                        <CheckCircle2 className="w-8 h-8 text-masters-green" />
+                      </div>
+                      <h3 className="text-lg font-bold text-masters-green mb-1">
+                        Picks Submitted!
+                      </h3>
+                      <p className="text-xs text-masters-green/50">
+                        Good luck! Taking you to the leaderboard...
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </>

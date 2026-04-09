@@ -4,7 +4,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import type { Tournament, Profile, Pool, PoolMember } from "@/lib/types";
-import { LogOut, Loader2, Copy, Check } from "lucide-react";
+import { LogOut, Loader2, Link2, Check, ChevronRight } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 
 interface Props {
@@ -27,7 +27,7 @@ export default function PoolLobby({
   const [inviteCode, setInviteCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [copied, setCopied] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -80,10 +80,11 @@ export default function PoolLobby({
     }
   }
 
-  function copyCode(code: string) {
-    navigator.clipboard.writeText(code);
-    setCopied(code);
-    setTimeout(() => setCopied(null), 2000);
+  function copyLink(pool: Pool) {
+    const url = `${window.location.origin}/join/${pool.invite_code}`;
+    navigator.clipboard.writeText(url);
+    setCopiedId(pool.id);
+    setTimeout(() => setCopiedId(null), 2500);
   }
 
   if (!tournament) {
@@ -128,60 +129,65 @@ export default function PoolLobby({
           Your Pools
         </h2>
         <p className="text-xs text-masters-green/40 mb-6">
-          Create a new pool or join one with an invite code.
+          Create a new pool or join one with an invite link.
         </p>
 
         {/* Existing pools */}
         {userPools.length > 0 && (
           <div className="space-y-2 mb-6">
             {userPools.map((m) => (
-              <button
-                key={m.pool.id}
-                onClick={() => router.push(`/pool/${m.pool.id}`)}
-                className="card w-full px-4 py-3 flex items-center justify-between hover:bg-masters-sand/50 transition-colors text-left"
-              >
-                <div>
-                  <p className="text-sm font-semibold text-masters-green">
-                    {m.pool.name}
-                  </p>
-                  <p className="text-[10px] text-masters-green/40 mt-0.5">
-                    Code: {m.pool.invite_code}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
+              <div key={m.pool.id} className="card-interactive group">
+                <button
+                  onClick={() => router.push(`/pool/${m.pool.id}`)}
+                  className="w-full px-4 py-3.5 flex items-center justify-between text-left"
+                >
+                  <div>
+                    <p className="text-sm font-semibold text-masters-green">
+                      {m.pool.name}
+                    </p>
+                    <p className="text-[10px] text-masters-green/40 mt-0.5">
+                      Code: {m.pool.invite_code}
+                    </p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-masters-green/20 group-hover:text-masters-green transition-colors" />
+                </button>
+                <div className="px-4 pb-3 -mt-1">
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      copyCode(m.pool.invite_code);
-                    }}
-                    className="text-masters-green/30 hover:text-masters-green transition-colors p-1"
-                    title="Copy invite code"
+                    onClick={() => copyLink(m.pool)}
+                    className={`inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full transition-all ${
+                      copiedId === m.pool.id
+                        ? "bg-masters-green text-white"
+                        : "bg-masters-sand text-masters-green/60 hover:bg-masters-green-light hover:text-masters-green"
+                    }`}
                   >
-                    {copied === m.pool.invite_code ? (
-                      <Check className="w-3.5 h-3.5" />
+                    {copiedId === m.pool.id ? (
+                      <>
+                        <Check className="w-3 h-3" /> Link copied!
+                      </>
                     ) : (
-                      <Copy className="w-3.5 h-3.5" />
+                      <>
+                        <Link2 className="w-3 h-3" /> Copy invite link
+                      </>
                     )}
                   </button>
-                  <span className="text-xs text-masters-green/40">→</span>
                 </div>
-              </button>
+              </div>
             ))}
           </div>
         )}
 
         {/* Create / Join */}
         {mode === "list" && (
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <button
               onClick={() => setMode("create")}
-              className="btn-masters flex-1"
+              className="btn-primary flex-1"
             >
               Create Pool
             </button>
             <button
               onClick={() => setMode("join")}
-              className="flex-1 px-4 py-2.5 rounded-md text-sm font-semibold border border-masters-green text-masters-green hover:bg-masters-green-light transition-colors"
+              className="btn-outline flex-1"
             >
               Join Pool
             </button>
@@ -189,7 +195,7 @@ export default function PoolLobby({
         )}
 
         {mode === "create" && (
-          <div className="card p-4 space-y-3">
+          <div className="card p-5 space-y-4">
             <p className="text-sm font-semibold text-masters-green">
               Create a New Pool
             </p>
@@ -199,18 +205,21 @@ export default function PoolLobby({
               placeholder="Pool name (e.g. The Boys)"
               value={poolName}
               onChange={(e) => setPoolName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleCreate()}
               autoFocus
             />
             {error && (
-              <p className="text-xs text-masters-gold">{error}</p>
+              <p className="text-xs text-masters-gold bg-masters-sand rounded-md px-3 py-2">
+                {error}
+              </p>
             )}
-            <div className="flex gap-2">
+            <div className="flex items-center gap-3">
               <button
                 onClick={handleCreate}
                 disabled={!poolName.trim() || loading}
-                className="btn-masters flex items-center gap-2"
+                className="btn-primary"
               >
-                {loading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                {loading && <Loader2 className="w-4 h-4 animate-spin" />}
                 Create
               </button>
               <button
@@ -218,7 +227,7 @@ export default function PoolLobby({
                   setMode("list");
                   setError("");
                 }}
-                className="text-xs text-masters-green/40 hover:text-masters-green"
+                className="btn-ghost"
               >
                 Cancel
               </button>
@@ -227,29 +236,32 @@ export default function PoolLobby({
         )}
 
         {mode === "join" && (
-          <div className="card p-4 space-y-3">
+          <div className="card p-5 space-y-4">
             <p className="text-sm font-semibold text-masters-green">
               Join a Pool
             </p>
             <input
               type="text"
-              className="input-field uppercase tracking-widest text-center font-mono"
+              className="input-field uppercase tracking-[0.25em] text-center font-mono text-lg"
               placeholder="INVITE CODE"
               value={inviteCode}
               onChange={(e) => setInviteCode(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleJoin()}
               maxLength={6}
               autoFocus
             />
             {error && (
-              <p className="text-xs text-masters-gold">{error}</p>
+              <p className="text-xs text-masters-gold bg-masters-sand rounded-md px-3 py-2">
+                {error}
+              </p>
             )}
-            <div className="flex gap-2">
+            <div className="flex items-center gap-3">
               <button
                 onClick={handleJoin}
                 disabled={!inviteCode.trim() || loading}
-                className="btn-masters flex items-center gap-2"
+                className="btn-primary"
               >
-                {loading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                {loading && <Loader2 className="w-4 h-4 animate-spin" />}
                 Join
               </button>
               <button
@@ -257,7 +269,7 @@ export default function PoolLobby({
                   setMode("list");
                   setError("");
                 }}
-                className="text-xs text-masters-green/40 hover:text-masters-green"
+                className="btn-ghost"
               >
                 Cancel
               </button>

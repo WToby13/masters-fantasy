@@ -108,7 +108,7 @@ export default function AuthForm() {
         <button
           type="submit"
           disabled={loading}
-          className="btn-masters w-full flex items-center justify-center gap-2"
+          className="btn-primary w-full"
         >
           {loading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
           {mode === "login" ? "Sign In" : "Create Account"}
