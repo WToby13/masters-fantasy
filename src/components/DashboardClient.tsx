@@ -377,12 +377,21 @@ export default function DashboardClient({
         )}
 
         {tab === "leaderboard" && (
-          <LeaderboardView
-            leaderboard={leaderboard}
-            currentUserId={user.id}
-            tournament={tournament}
-            isLive={isLive}
-          />
+          <>
+            <LeaderboardView
+              leaderboard={leaderboard}
+              currentUserId={user.id}
+              tournament={tournament}
+              isLive={isLive}
+            />
+            {isLive && (
+              <TournamentScoreboard
+                golfers={golfers}
+                userPickGolferIds={new Set(userPicks.map((p) => p.golfer_id))}
+                tournament={tournament}
+              />
+            )}
+          </>
         )}
       </div>
     </div>
@@ -687,4 +696,118 @@ function LeaderboardView({
       </div>
     </div>
   );
+}
+
+/* ── Live Tournament Scoreboard ──────────────────────────── */
+
+function TournamentScoreboard({
+  golfers,
+  userPickGolferIds,
+  tournament,
+}: {
+  golfers: Golfer[];
+  userPickGolferIds: Set<string>;
+  tournament: Tournament;
+}) {
+  const sorted = [...golfers]
+    .filter((g) => g.position != null || g.score_to_par != null)
+    .sort((a, b) => (a.position ?? 999) - (b.position ?? 999));
+
+  if (sorted.length === 0) return null;
+
+  const updatedAt = tournament.scores_updated_at
+    ? timeAgo(new Date(tournament.scores_updated_at))
+    : null;
+
+  return (
+    <div className="card overflow-hidden mt-6">
+      <div className="px-4 py-2.5 bg-masters-green text-white flex items-center justify-between">
+        <span className="text-[10px] font-bold uppercase tracking-wider">
+          Live Tournament Standings
+        </span>
+        {updatedAt && (
+          <span className="text-[10px] text-white/40">
+            Updated {updatedAt}
+          </span>
+        )}
+      </div>
+
+      {/* Table header */}
+      <div className="grid grid-cols-[3rem_1fr_4.5rem_4.5rem_4.5rem] sm:grid-cols-[3rem_1fr_5rem_5rem_5rem] px-4 py-2 bg-masters-sand border-b border-masters-beige text-[10px] font-bold text-masters-green/60 uppercase tracking-wider">
+        <span>Pos</span>
+        <span>Player</span>
+        <span className="text-right">Thru</span>
+        <span className="text-right">Today</span>
+        <span className="text-right">Total</span>
+      </div>
+
+      {/* Rows */}
+      <div className="divide-y divide-masters-beige/40 max-h-[28rem] overflow-y-auto">
+        {sorted.map((g, idx) => {
+          const isPicked = userPickGolferIds.has(g.id);
+          const showPos =
+            idx === 0 || g.position !== sorted[idx - 1].position;
+          const isCut = g.status === "cut";
+          const isWD = g.status === "withdrawn" || g.status === "disqualified";
+
+          return (
+            <div
+              key={g.id}
+              className={`grid grid-cols-[3rem_1fr_4.5rem_4.5rem_4.5rem] sm:grid-cols-[3rem_1fr_5rem_5rem_5rem] px-4 py-2 items-center transition-colors ${
+                isPicked
+                  ? "bg-masters-green-light/60 border-l-[3px] border-l-masters-green"
+                  : ""
+              } ${isCut || isWD ? "opacity-50" : ""}`}
+            >
+              <span className="text-xs text-masters-green/50 font-sans tabular-nums">
+                {showPos ? (isCut ? "CUT" : isWD ? "WD" : `${g.position}`) : ""}
+              </span>
+              <span className="text-[13px] font-medium text-masters-green truncate pr-2">
+                {g.name}
+                {isPicked && (
+                  <span className="ml-1.5 inline-flex items-center text-[9px] bg-masters-green text-white px-1.5 py-0.5 rounded font-bold align-middle">
+                    MY PICK
+                  </span>
+                )}
+              </span>
+              <span className="text-xs text-right text-masters-green/60 font-sans tabular-nums">
+                {g.thru ?? "—"}
+              </span>
+              <span
+                className={`text-xs text-right font-sans tabular-nums font-medium ${
+                  g.today_score?.startsWith("-")
+                    ? "text-red-600"
+                    : g.today_score?.startsWith("+")
+                      ? "text-masters-green/60"
+                      : "text-masters-green/80"
+                }`}
+              >
+                {g.today_score ?? "—"}
+              </span>
+              <span
+                className={`text-sm text-right font-semibold font-sans tabular-nums ${
+                  g.score_to_par?.startsWith("-")
+                    ? "text-red-600"
+                    : g.score_to_par?.startsWith("+")
+                      ? "text-masters-green/60"
+                      : "text-masters-green"
+                }`}
+              >
+                {g.score_to_par ?? "—"}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function timeAgo(date: Date): string {
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  return `${hours}h ago`;
 }

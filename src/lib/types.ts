@@ -13,6 +13,7 @@ export interface Tournament {
   status: "upcoming" | "drafting" | "locked" | "in_progress" | "completed";
   winning_score: number | null;
   espn_event_id: string | null;
+  scores_updated_at: string | null;
   created_at: string;
 }
 
@@ -28,6 +29,10 @@ export interface Golfer {
   score_r3: number | null;
   score_r4: number | null;
   total_score: number | null;
+  score_to_par: string | null;
+  today_score: string | null;
+  thru: string | null;
+  position: number | null;
   status: "active" | "cut" | "withdrawn" | "disqualified";
   created_at: string;
 }

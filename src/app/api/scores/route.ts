@@ -10,21 +10,71 @@ import { NextResponse } from "next/server";
 
 const MASTERS_2026_ESPN_ID = "401811941";
 
-interface ESPNCompetitor {
-  athlete: { displayName: string };
-  status: { type: { name: string } };
-  score: { displayValue: string };
-  linescores?: { value: number }[];
+interface ESPNLinescoreStat {
+  value?: number;
+  displayValue?: string;
 }
 
-interface ESPNEvent {
-  competitions: {
-    competitors: ESPNCompetitor[];
-  }[];
+interface ESPNLinescore {
+  value?: number;
+  displayValue?: string;
+  period?: number;
+  linescores?: { value?: number; displayValue?: string }[];
+  statistics?: {
+    categories?: {
+      stats?: ESPNLinescoreStat[];
+    }[];
+  };
+}
+
+interface ESPNCompetitor {
+  athlete: { displayName: string };
+  status?: { type?: { name?: string } };
+  score?: string;
+  order?: number;
+  linescores?: ESPNLinescore[];
+  statistics?: unknown[];
 }
 
 interface ESPNResponse {
-  events: ESPNEvent[];
+  events?: {
+    competitions?: {
+      competitors?: ESPNCompetitor[];
+      status?: {
+        period?: number;
+      };
+    }[];
+  }[];
+}
+
+function extractThru(linescore: ESPNLinescore | undefined): string | null {
+  if (!linescore) return null;
+  const stats =
+    linescore.statistics?.categories?.[0]?.stats ?? [];
+  const holesStat = stats[5];
+  const teeTimeStat = stats[6];
+  const holesCompleted = holesStat?.value ?? 0;
+
+  if (holesCompleted === 18) return "F";
+  if (holesCompleted > 0) return String(holesCompleted);
+
+  if (teeTimeStat?.displayValue) {
+    const raw = teeTimeStat.displayValue;
+    const match = raw.match(/(\d{1,2}):(\d{2}):\d{2}\s*(AM|PM|[A-Z]{3,})/i);
+    if (match) {
+      let hour = parseInt(match[1]);
+      const min = match[2];
+      const ampm = match[3];
+      if (/PM/i.test(ampm) && hour < 12) hour += 12;
+      if (/AM/i.test(ampm) && hour === 12) hour = 0;
+      const h12 = hour % 12 || 12;
+      const suffix = hour >= 12 ? "PM" : "AM";
+      return `${h12}:${min} ${suffix}`;
+    }
+    return raw;
+  }
+
+  return null;
 }
 
 async function updateScores(tournamentId: string, espnEventId: string) {
@@ -44,24 +94,38 @@ async function updateScores(tournamentId: string, espnEventId: string) {
   if (!res.ok) throw new Error(`ESPN API returned ${res.status}`);
 
   const espn: ESPNResponse = await res.json();
-  const competitors =
-    espn.events?.[0]?.competitions?.[0]?.competitors || [];
+  const competition = espn.events?.[0]?.competitions?.[0];
+  const competitors = competition?.competitors || [];
+  const currentPeriod = (competition?.status?.period ?? 1) - 1;
 
   let updated = 0;
 
   for (const golfer of golfers) {
     const match = competitors.find(
-      (c: ESPNCompetitor) =>
+      (c) =>
         c.athlete.displayName.toLowerCase() === golfer.name.toLowerCase()
     );
     if (!match) continue;
 
-    const isCut = match.status?.type?.name === "cut";
-    const isWD = match.status?.type?.name === "withdrawn";
-    const isDQ = match.status?.type?.name === "disqualified";
+    const statusName = match.status?.type?.name ?? "";
+    const isCut = statusName === "cut";
+    const isWD = statusName === "withdrawn";
+    const isDQ = statusName === "disqualified";
     const linescores = match.linescores || [];
-    const totalDisplay = match.score?.displayValue;
-    const totalScore = totalDisplay ? parseInt(totalDisplay) : null;
+
+    const currentRound = linescores[currentPeriod];
+    const todayDisplay = currentRound?.displayValue ?? null;
+    const thru = extractThru(currentRound);
+    const scoreToPar = typeof match.score === "string" ? match.score : null;
+    const position = match.order ?? null;
+
+    const totalScoreRaw = scoreToPar ? parseInt(scoreToPar) : null;
+    const totalScore =
+      scoreToPar === "E"
+        ? 0
+        : !isNaN(totalScoreRaw as number)
+          ? totalScoreRaw
+          : null;
 
     await supabase
       .from("golfers")
@@ -71,6 +135,10 @@ async function updateScores(tournamentId: string, espnEventId: string) {
         score_r3: linescores[2]?.value ?? null,
         score_r4: linescores[3]?.value ?? null,
         total_score: totalScore,
+        score_to_par: scoreToPar,
+        today_score: todayDisplay,
+        thru,
+        position,
         status: isCut
           ? "cut"
           : isWD
@@ -83,6 +151,11 @@ async function updateScores(tournamentId: string, espnEventId: string) {
 
     updated++;
   }
+
+  await supabase
+    .from("tournaments")
+    .update({ scores_updated_at: new Date().toISOString() })
+    .eq("id", tournamentId);
 
   return { updated, total: golfers.length, source: url };
 }
